@@ -1,4 +1,12 @@
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
@@ -30,8 +38,13 @@ function launchEnv(): Record<string, string> {
 
 test.beforeEach(async () => {
   home = mkdtempSync(join(tmpdir(), 'alma-e2e-log-'))
-  // Without a Documents folder Electron falls back to the home folder.
+  // Electron asks the XDG user dirs for "documents": point them at the temporary home.
   mkdirSync(join(home, 'Documents'))
+  mkdirSync(join(home, '.config'))
+  writeFileSync(
+    join(home, '.config', 'user-dirs.dirs'),
+    `XDG_DOCUMENTS_DIR="${join(home, 'Documents')}"\n`,
+  )
   app = await electron.launch(launchOptions(launchEnv()))
   page = await app.firstWindow()
   await page.waitForLoadState('domcontentloaded')
@@ -54,8 +67,11 @@ test('writes what a local terminal printed to a text log in the documents folder
   await page.keyboard.press('Enter')
   await expect(page.getByRole('heading', { name: 'La sesión terminó' })).toBeVisible()
 
-  const dir = join(home, 'Documents', 'Alma Term', 'logs')
-  await expect.poll(() => readdirSync(dir).length).toBe(1)
+  // The documents folder when the system defines one, else the home folder.
+  const dirs = [join(home, 'Documents', 'Alma Term', 'logs'), join(home, 'Alma Term', 'logs')]
+  const found = () => dirs.find((d) => existsSync(d))
+  await expect.poll(() => (found() ? readdirSync(found() ?? '').length : 0)).toBe(1)
+  const dir = found() ?? ''
   const [file] = readdirSync(dir)
   expect(file).toMatch(/^local_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.log$/)
   const text = readFileSync(join(dir, file ?? ''), 'utf8')
