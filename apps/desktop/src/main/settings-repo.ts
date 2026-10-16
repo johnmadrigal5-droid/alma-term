@@ -4,6 +4,7 @@ import type { AlmaDb } from './db/open-database'
 import { settings } from './db/schema'
 
 const THEME = 'theme'
+const LOG_DIR = 'logDir'
 
 /** Small app settings in the `settings` table; each value is JSON validated by its reader. */
 export class SettingsRepo {
@@ -26,6 +27,30 @@ export class SettingsRepo {
     await this.db
       .insert(settings)
       .values({ key: THEME, value })
+      .onConflictDoUpdate({ target: settings.key, set: { value } })
+  }
+
+  /** The folder the user chose for session logs; null means the default one. */
+  async logDir(): Promise<string | null> {
+    const [row] = await this.db.select().from(settings).where(eq(settings.key, LOG_DIR))
+    if (!row) return null
+    try {
+      const parsed: unknown = JSON.parse(row.value)
+      return typeof parsed === 'string' && parsed !== '' ? parsed : null
+    } catch {
+      return null
+    }
+  }
+
+  async setLogDir(dir: string | null): Promise<void> {
+    if (dir === null) {
+      await this.db.delete(settings).where(eq(settings.key, LOG_DIR))
+      return
+    }
+    const value = JSON.stringify(dir)
+    await this.db
+      .insert(settings)
+      .values({ key: LOG_DIR, value })
       .onConflictDoUpdate({ target: settings.key, set: { value } })
   }
 }

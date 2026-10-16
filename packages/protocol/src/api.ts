@@ -166,6 +166,9 @@ export interface AlmaApi {
   initialTheme: ThemeName
   settings: {
     setTheme(theme: ThemeName): Promise<ApiResult<null>>
+    /** Asks for the folder of the session logs; null when the dialog is cancelled. */
+    chooseLogDir(): Promise<ApiResult<{ dir: string } | null>>
+    openLogDir(): Promise<ApiResult<null>>
   }
   /** Native pickers; empty or null when cancelled. */
   pickUploadFiles(): Promise<string[]>

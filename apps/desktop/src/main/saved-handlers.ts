@@ -10,6 +10,7 @@ import {
   type IdArgs,
   type ImportCandidate,
   type ImportPreview,
+  type SessionLog,
   type LiveSession,
   type OpenSavedArgs,
   type RenameFolderArgs,
@@ -42,6 +43,8 @@ export interface SavedHandlerDeps<P extends ClosablePort> {
   previewImport(existing: SavedSession[]): ImportPreview
   /** Asks the user where to save; null when the dialog is cancelled. */
   saveExportFile(json: string): Promise<string | null>
+  /** The session log settings for a connection called `name`; absent when logging is off. */
+  logFor?(name: string): Promise<SessionLog>
 }
 
 export function toFailure(error: unknown): ApiResult<never> {
@@ -169,6 +172,7 @@ export function createSavedHandlers<P extends ClosablePort>(deps: SavedHandlerDe
               auth: config.auth,
               trusted: await deps.knownHosts.list(config.target.host, config.target.port),
               rememberable: deps.secrets.isSecure(),
+              log: await deps.logFor?.(`${config.target.username}@${config.target.host}`),
             },
             [port1],
             { timeoutMs: null },

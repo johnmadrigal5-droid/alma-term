@@ -55,6 +55,25 @@ describe('SessionManager', () => {
     ])
   })
 
+  it('opens the session log when the request asks for one', () => {
+    const openLog = vi.fn(() => ({ write: vi.fn(), close: vi.fn() }))
+    const manager = new SessionManager({
+      ptyFactory: () => new FakePty(),
+      shell: () => ({ shell: '/bin/bash', args: [] }),
+      env: () => ({}),
+      cwd: () => '/home/test',
+      send: vi.fn(),
+      scheduler: new FakeScheduler(),
+      openLog,
+    })
+    const log = { dir: '/logs', name: 'local' }
+    manager.handle(
+      { type: 'local.open', requestId: rid(1), sessionId: SID, cols: 80, rows: 24, log },
+      [new FakePort()],
+    )
+    expect(openLog).toHaveBeenCalledWith(log)
+  })
+
   it('rejects invalid messages with INVALID_MESSAGE and closes their ports', () => {
     const { manager, sent } = setup()
     const port = new FakePort()

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { writeFileSync } from 'node:fs'
-import { stat } from 'node:fs/promises'
+import { mkdir, stat } from 'node:fs/promises'
 import { homedir, userInfo } from 'node:os'
 import { join } from 'node:path'
 import {
@@ -27,6 +27,7 @@ import {
   dialog,
   ipcMain,
   MessageChannelMain,
+  shell,
   type BrowserWindow,
   type MessagePortMain,
 } from 'electron'
@@ -37,6 +38,7 @@ import { createSavedHandlers, toFailure } from './saved-handlers'
 import type { SecretStore } from './secrets'
 import type { SessionRegistry } from './session-registry'
 import type { SessionsRepo } from './sessions-repo'
+import type { SessionLogConfig } from './session-log-config'
 import type { SettingsRepo } from './settings-repo'
 import { createSftpHandlers } from './sftp-handlers'
 import { createTunnelHandlers } from './tunnel-handlers'
@@ -51,6 +53,7 @@ export interface IpcDeps {
   repo: SessionsRepo
   secrets: SecretStore
   settings: SettingsRepo
+  sessionLog: SessionLogConfig
   tunnels: TunnelsRepo
   getWindow: () => BrowserWindow | null
   isTrusted: (frameUrl: string | undefined) => boolean
@@ -74,6 +77,7 @@ export function registerIpc(deps: IpcDeps): ReturnType<typeof createSavedHandler
         read: readText,
         list: listDir,
       }),
+    logFor: (name) => deps.sessionLog.forSession(name),
     saveExportFile: async (json) => {
       const options: Electron.SaveDialogOptions = {
         title: 'Exportar sesiones',
@@ -122,7 +126,13 @@ export function registerIpc(deps: IpcDeps): ReturnType<typeof createSavedHandler
     const { port1, port2 } = new MessageChannelMain()
     try {
       await deps.supervisor.request(
-        { type: 'local.open', requestId: randomUUID(), sessionId, ...clampSize(cols, rows) },
+        {
+          type: 'local.open',
+          requestId: randomUUID(),
+          sessionId,
+          ...clampSize(cols, rows),
+          log: await deps.sessionLog.forSession('local'),
+        },
         [port1],
       )
     } catch (error) {
@@ -152,6 +162,7 @@ export function registerIpc(deps: IpcDeps): ReturnType<typeof createSavedHandler
           auth,
           trusted: await deps.knownHosts.list(target.host, target.port),
           rememberable: false,
+          log: await deps.sessionLog.forSession(`${target.username}@${target.host}`),
         },
         [port1],
         { timeoutMs: null },
@@ -274,6 +285,23 @@ export function registerIpc(deps: IpcDeps): ReturnType<typeof createSavedHandler
   }))
   handle('tunnels:saved:remove', SavedTunnelRemoveArgs, async ({ id }) => {
     await deps.tunnels.remove(id)
+    return { ok: true, data: null }
+  })
+  handle('settings:chooseLogDir', z.undefined(), async () => {
+    const [folder] = await pick({
+      title: 'Carpeta de registros de sesión',
+      defaultPath: await deps.sessionLog.dir(),
+      properties: ['openDirectory', 'createDirectory'],
+    })
+    if (!folder) return { ok: true, data: null }
+    await deps.settings.setLogDir(folder)
+    return { ok: true, data: { dir: folder } }
+  })
+  handle('settings:openLogDir', z.undefined(), async () => {
+    const dir = await deps.sessionLog.dir()
+    await mkdir(dir, { recursive: true, mode: 0o700 })
+    const failure = await shell.openPath(dir)
+    if (failure) return { ok: false, error: { code: 'HOST_UNAVAILABLE', message: failure } }
     return { ok: true, data: null }
   })
   handle('settings:setTheme', ThemeName, async (theme) => {

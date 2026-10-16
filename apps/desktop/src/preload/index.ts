@@ -29,7 +29,11 @@ const initialTheme: ThemeName = (() => {
 const api: AlmaApi = {
   platform: process.platform,
   initialTheme,
-  settings: { setTheme: (theme) => ipcRenderer.invoke('settings:setTheme', theme) },
+  settings: {
+    setTheme: (theme) => ipcRenderer.invoke('settings:setTheme', theme),
+    chooseLogDir: () => ipcRenderer.invoke('settings:chooseLogDir'),
+    openLogDir: () => ipcRenderer.invoke('settings:openLogDir'),
+  },
   flags: { disableWebgl: process.env['ALMA_DISABLE_WEBGL'] === '1' },
   session: {
     openLocal: (args) => ipcRenderer.invoke('session:openLocal', args),

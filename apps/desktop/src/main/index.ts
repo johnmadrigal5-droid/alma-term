@@ -19,6 +19,7 @@ import { RestartPolicy } from './restart-policy'
 import { createSafeStorageSecretStore } from './secrets'
 import { SessionRegistry } from './session-registry'
 import { createSmokeGuard, smokeMode } from './smoke'
+import { SessionLogConfig } from './session-log-config'
 import { SettingsRepo } from './settings-repo'
 import { TunnelsRepo } from './tunnels-repo'
 import { SessionsRepo } from './sessions-repo'
@@ -127,6 +128,10 @@ void app.whenReady().then(async () => {
     repo,
     secrets,
     settings: settingsRepo,
+    sessionLog: new SessionLogConfig(
+      settingsRepo,
+      join(app.getPath('documents'), 'Alma Term', 'logs'),
+    ),
     tunnels: new TunnelsRepo(db),
     getWindow: () => mainWindow,
     isTrusted: (url) => isTrustedSender(url, { devServerUrl, rendererFile }),

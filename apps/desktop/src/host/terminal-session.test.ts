@@ -107,4 +107,42 @@ describe('TerminalSession', () => {
     const replay = dataMessages(next)[0]
     expect(new TextDecoder().decode(replay?.bytes)).toBe('antes durante')
   })
+
+  describe('session log', () => {
+    function withLog() {
+      const pty = new FakePty()
+      const scheduler = new FakeScheduler()
+      const log = { write: vi.fn(), close: vi.fn() }
+      const warn = vi.fn()
+      const session = new TerminalSession({
+        id: 's1',
+        pty,
+        scheduler,
+        warn,
+        log,
+        onStatus: vi.fn(),
+        onDetached: vi.fn(),
+      })
+      return { pty, scheduler, log, warn, session }
+    }
+
+    it('logs the output even when no tab is attached, and closes the log on exit', () => {
+      const { pty, scheduler, log } = withLog()
+      pty.emitData('hola')
+      scheduler.advance(20)
+      expect(new TextDecoder().decode(log.write.mock.calls[0]?.[0] as Uint8Array)).toBe('hola')
+      pty.emitExit(0)
+      expect(log.close).toHaveBeenCalledOnce()
+    })
+
+    it('keeps the session alive when the log throws', () => {
+      const { pty, scheduler, log, warn } = withLog()
+      log.write.mockImplementation(() => {
+        throw new Error('disco lleno')
+      })
+      pty.emitData('hola')
+      scheduler.advance(20)
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('disco lleno'))
+    })
+  })
 })
