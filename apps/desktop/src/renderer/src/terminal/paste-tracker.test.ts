@@ -17,4 +17,15 @@ describe('trackPaste', () => {
     expect(tracker.active()).toBe(false)
     tracker.dispose()
   })
+
+  it('counts a paste run by the app and stops after it', () => {
+    const tracker = trackPaste(document.createElement('div'))
+    let during = false
+    tracker.around(() => {
+      during = tracker.active()
+    })
+    expect(during).toBe(true)
+    expect(tracker.active()).toBe(false)
+    tracker.dispose()
+  })
 })

@@ -140,18 +140,6 @@ CI (`.github/workflows`) runs Prettier, ESLint, type checks, unit and native tes
 - Accessibility checked with axe-core in both themes (zero serious or critical violations), focus trapped and restored in dialogs, targets of at least 24 px.
 - WCAG AA contrast verified by a test that recomputes each theme's token matrix.
 
-## Roadmap
-
-- [x] Milestone 1 · Monorepo, layout, protocol and local terminal
-- [x] Milestone 2 · SSH with host key verification and authentication prompts
-- [x] Milestone 3 · Session manager, encryption and `~/.ssh/config` import
-- [x] Milestone 4 · Side SFTP panel with transfer queue
-- [x] Milestone 5 · Split panes and MultiExec
-- [x] Milestone 6 · SSH tunnels `-L`, `-R` and `-D`
-- [x] Milestone 7 · Light theme, accessibility, SCP mode and cross-platform packaging in CI
-
-Planned for v1.1: shell command marks (OSC 133), "Follow shell" with OSC 7, `ProxyJump` and code signing with a certificate.
-
 ## Contributing
 
 Report bugs and ideas in [Issues](https://github.com/johnmadrigal5-droid/alma-term/issues). For a code change, open a pull request against `main` with `pnpm lint`, `pnpm typecheck` and `pnpm test` passing; commits follow `type(scope): description`.

@@ -8,6 +8,7 @@ import { useTheme } from '../theme/use-theme'
 import { currentTokens } from '../theme/apply-theme'
 import { fromXterm } from '../multiexec/translate'
 import { connectTerminal, sendInput } from './connect-terminal'
+import { bindContextClick } from './context-click'
 import { mayTakeFocus } from './focus'
 import { trackPaste } from './paste-tracker'
 import { portRegistry } from './port-registry-instance'
@@ -51,6 +52,7 @@ export function TerminalView({ sessionId, generation, active, onExit }: Props) {
     term.loadAddon(fit)
     term.open(el)
     const paste = trackPaste(el)
+    const unbindContext = bindContextClick(el, term, paste, navigator.clipboard)
     if (!window.api.flags.disableWebgl) {
       try {
         const webgl = new WebglAddon()
@@ -108,6 +110,7 @@ export function TerminalView({ sessionId, generation, active, onExit }: Props) {
       observer.disconnect()
       window.clearTimeout(resizeTimer)
       unregister?.()
+      unbindContext()
       paste.dispose()
       disconnect?.()
       term.dispose()
