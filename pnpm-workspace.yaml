@@ -1,0 +1,11 @@
+packages:
+  - apps/*
+  - packages/*
+onlyBuiltDependencies:
+  - electron
+  - esbuild
+  - node-pty
+ignoredBuiltDependencies:
+  - cpu-features
+  - electron-winstaller
+  - ssh2

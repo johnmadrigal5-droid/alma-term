@@ -1,0 +1,93 @@
+name: Package
+
+# Packages the app on Ubuntu, Windows and macOS and proves each binary starts (ALMA_SMOKE_TEST).
+# Nothing is signed with a certificate: macOS is ad-hoc signed, Windows and Linux are not.
+# Called by release.yml (tags) and by ci.yml (manual run with "package"); it only reads the repo.
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            name: linux
+            build: --linux
+          - os: windows-2025
+            name: windows
+            build: --win
+          - os: macos-15
+            name: macos
+            build: --mac
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Compilar
+        run: pnpm --filter @alma/desktop build
+      - name: Empaquetar
+        working-directory: apps/desktop
+        run: pnpm exec electron-builder ${{ matrix.build }} --publish never
+
+      - name: Humo (Linux)
+        if: matrix.name == 'linux'
+        working-directory: apps/desktop
+        env:
+          ALMA_SMOKE_TEST: '1'
+        run: |
+          out=$(xvfb-run -a timeout 90 release/linux-unpacked/alma-term --no-sandbox 2>&1) || { echo "$out"; exit 1; }
+          echo "$out"
+          echo "$out" | grep -q ALMA_SMOKE_OK
+
+      - name: Humo (Windows)
+        if: matrix.name == 'windows'
+        working-directory: apps/desktop
+        shell: pwsh
+        env:
+          ALMA_SMOKE_TEST: '1'
+          ALMA_SMOKE_FILE: ${{ github.workspace }}\smoke.txt
+        run: |
+          $exe = Get-ChildItem release\win-unpacked\*.exe | Where-Object { $_.Name -notmatch 'Uninstall' } | Select-Object -First 1
+          Write-Host "Ejecutando $($exe.FullName)"
+          $p = Start-Process -FilePath $exe.FullName -PassThru
+          if (-not $p.WaitForExit(90000)) { $p.Kill(); Write-Host 'Sin arrancar en 90 s'; exit 1 }
+          if (Test-Path $env:ALMA_SMOKE_FILE) { Get-Content $env:ALMA_SMOKE_FILE }
+          if ($p.ExitCode -ne 0) { Write-Host "Exit code $($p.ExitCode)"; exit 1 }
+          if (-not (Select-String -Path $env:ALMA_SMOKE_FILE -Pattern 'ALMA_SMOKE_OK' -Quiet)) { exit 1 }
+
+      - name: Humo (macOS)
+        if: matrix.name == 'macos'
+        working-directory: apps/desktop
+        env:
+          ALMA_SMOKE_TEST: '1'
+          ALMA_SMOKE_FILE: ${{ github.workspace }}/smoke.txt
+        run: |
+          app=$(ls -d release/mac-arm64/*.app | head -1)
+          bin="$app/Contents/MacOS/$(ls "$app/Contents/MacOS" | head -1)"
+          echo "Ejecutando $bin"
+          "$bin" & pid=$!
+          for i in $(seq 1 90); do kill -0 $pid 2>/dev/null || break; sleep 1; done
+          if kill -0 $pid 2>/dev/null; then kill $pid; echo "Sin arrancar en 90 s"; exit 1; fi
+          wait $pid
+          cat "$ALMA_SMOKE_FILE"
+          grep -q ALMA_SMOKE_OK "$ALMA_SMOKE_FILE"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alma-term-${{ matrix.name }}
+          if-no-files-found: error
+          path: |
+            apps/desktop/release/*.AppImage
+            apps/desktop/release/*.deb
+            apps/desktop/release/*.exe
+            apps/desktop/release/*.dmg

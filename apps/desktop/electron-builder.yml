@@ -1,0 +1,46 @@
+# Packaging for the three systems. No signing certificate: Windows installs unsigned (SmartScreen
+# warns), macOS is ad-hoc signed (identity "-") so it starts on Apple Silicon, Linux ships an
+# AppImage and a .deb.
+appId: dev.alma.term
+productName: Alma Term
+executableName: alma-term
+artifactName: Alma-Term-${version}.${ext}
+directories:
+  output: release
+  buildResources: build-resources
+afterPack: scripts/after-pack.cjs
+icon: build-resources/icon.png
+files:
+  - out/**
+  - drizzle/**
+  - package.json
+  - '!**/node_modules/node-pty/{src,deps,third_party,scripts,binding.gyp,typings}/**'
+  - '!**/node_modules/node-pty/build/{Debug,deps}/**'
+# node-pty ships N-API prebuilds for Windows/macOS; Linux uses the electron-rebuild output.
+npmRebuild: false
+asarUnpack:
+  - '**/node_modules/node-pty/**'
+linux:
+  target:
+    - AppImage
+    - deb
+  category: System
+  executableName: alma-term
+  maintainer: John Madrigal <johnmadrigal5-droid@users.noreply.github.com>
+win:
+  target: nsis
+  signAndEditExecutable: false
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  artifactName: Alma-Term-Setup-${version}.${ext}
+deb:
+  artifactName: Alma-Term-${version}.${ext}
+mac:
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+  identity: '-'
+  category: public.app-category.developer-tools
+dmg:
+  artifactName: Alma-Term-${version}-${arch}.${ext}

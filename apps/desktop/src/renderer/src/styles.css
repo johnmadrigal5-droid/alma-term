@@ -1,0 +1,68 @@
+@import 'tailwindcss';
+
+@theme inline {
+  --color-canvas: var(--alma-canvas);
+  --color-s1: var(--alma-s1);
+  --color-s2: var(--alma-s2);
+  --color-s3: var(--alma-s3);
+  --color-text: var(--alma-text);
+  --color-muted: var(--alma-muted);
+  --color-faint: var(--alma-faint);
+  --color-accent: var(--alma-accent);
+  --color-accent-text: var(--alma-accent-text);
+  --color-ok: var(--alma-ok);
+  --color-warn: var(--alma-warn);
+  --color-err: var(--alma-err);
+  --color-term-bg: var(--alma-term-bg);
+  --color-term-fg: var(--alma-term-fg);
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+html,
+body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  background: var(--alma-canvas);
+  color: var(--alma-text);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.drag {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+:focus-visible {
+  outline: 2px solid var(--alma-accent-text);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}
+
+/* xterm paints its scroll area black; the terminal background follows the theme instead. */
+.xterm .xterm-viewport {
+  background-color: var(--alma-term-bg) !important;
+}

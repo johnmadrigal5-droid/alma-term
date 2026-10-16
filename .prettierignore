@@ -1,0 +1,7 @@
+out
+dist
+pnpm-lock.yaml
+test-results
+
+# Generated Drizzle snapshots are not hand-formatted.
+apps/desktop/drizzle/meta/

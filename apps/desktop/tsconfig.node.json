@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM"],
+    "types": ["node"],
+    "paths": { "@alma/protocol": ["../../packages/protocol/src/index.ts"] }
+  },
+  "include": [
+    "src/main/**/*",
+    "src/host/**/*",
+    "src/preload/**/*",
+    "e2e/**/*",
+    "*.config.ts",
+    "aliases.ts"
+  ]
+}

@@ -1,0 +1,15 @@
+
+# Node / build
+node_modules/
+dist/
+out/
+release/
+*.log
+.env
+.env.*
+test-results/
+playwright-report/
+
+# Notas, planes y specs internos: solo el README es público
+*.md
+!README.md
