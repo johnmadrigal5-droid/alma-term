@@ -42,6 +42,8 @@ describe('paletteItems', () => {
       'Importar ~/.ssh/config',
       'Nueva carpeta',
       'Exportar sesiones',
+      'Abrir carpeta de registros',
+      'Elegir carpeta de registros…',
     ])
   })
 

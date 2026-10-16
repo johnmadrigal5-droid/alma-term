@@ -39,4 +39,17 @@ describe('SettingsRepo', () => {
     expect(await db.select().from(settings)).toHaveLength(1)
     expect(await repo.theme()).toBe('light')
   })
+
+  it('has no log folder until one is chosen, and can go back to the default', async () => {
+    expect(await repo.logDir()).toBeNull()
+    await repo.setLogDir('/srv/logs')
+    expect(await repo.logDir()).toBe('/srv/logs')
+    await repo.setLogDir(null)
+    expect(await repo.logDir()).toBeNull()
+  })
+
+  it('ignores a stored log folder that is not a path', async () => {
+    await db.insert(settings).values({ key: 'logDir', value: '42' })
+    expect(await repo.logDir()).toBeNull()
+  })
 })

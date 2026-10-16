@@ -21,6 +21,13 @@ import { KnownHostEntry, PromptAnswer, SshAuth, SshTarget } from './ssh'
 const Cols = z.number().int().min(SIZE_LIMITS.minCols).max(SIZE_LIMITS.maxCols)
 const Rows = z.number().int().min(SIZE_LIMITS.minRows).max(SIZE_LIMITS.maxRows)
 
+/** Where and under which name the host writes the text log of a session. */
+export const SessionLog = z.object({
+  dir: z.string().min(1).max(4096),
+  name: z.string().min(1).max(255),
+})
+export type SessionLog = z.infer<typeof SessionLog>
+
 export const LocalOpen = z.object({
   type: z.literal('local.open'),
   requestId: RequestId,
@@ -29,6 +36,7 @@ export const LocalOpen = z.object({
   rows: Rows,
   shell: z.string().min(1).optional(),
   cwd: z.string().min(1).optional(),
+  log: SessionLog.optional(),
 })
 
 export const SessionResize = z.object({
@@ -62,6 +70,7 @@ export const SshOpen = z.object({
   trusted: z.array(KnownHostEntry),
   // True only for a saved session on a system with a secure secret store.
   rememberable: z.boolean().default(false),
+  log: SessionLog.optional(),
 })
 
 export const PromptAnswerRequest = z.object({

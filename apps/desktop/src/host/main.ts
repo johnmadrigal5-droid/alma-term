@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { buildPtyEnv, defaultShell } from './defaults'
 import { fromElectronPort, type ElectronPortShape } from './ports'
 import { nodePtyFactory } from './pty'
+import { openSessionLog } from './session-log'
 import { SessionManager } from './session-manager'
 import { ssh2Connector } from './ssh/ssh2-connector'
 
@@ -27,6 +28,8 @@ const manager = new SessionManager({
   send: (message) => parentPort.postMessage(message),
   warn: (message) => console.warn(`[host] ${message}`),
   sshConnector: ssh2Connector,
+  openLog: (log) =>
+    openSessionLog({ ...log, warn: (message) => console.warn(`[host] ${message}`) }),
   // Read-only: the app never writes the user's known_hosts.
   readKnownHostsFile: () => {
     try {

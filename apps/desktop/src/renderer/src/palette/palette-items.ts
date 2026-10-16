@@ -11,6 +11,8 @@ export type PaletteCommand =
   | { type: 'import' }
   | { type: 'newFolder' }
   | { type: 'export' }
+  | { type: 'chooseLogDir' }
+  | { type: 'openLogDir' }
 
 export interface PaletteItem {
   id: string
@@ -32,6 +34,12 @@ const ACTIONS: PaletteItem[] = [
   { id: 'action:import', label: 'Importar ~/.ssh/config', command: { type: 'import' } },
   { id: 'action:newFolder', label: 'Nueva carpeta', command: { type: 'newFolder' } },
   { id: 'action:export', label: 'Exportar sesiones', command: { type: 'export' } },
+  { id: 'action:openLogDir', label: 'Abrir carpeta de registros', command: { type: 'openLogDir' } },
+  {
+    id: 'action:chooseLogDir',
+    label: 'Elegir carpeta de registros…',
+    command: { type: 'chooseLogDir' },
+  },
 ]
 
 export function paletteItems({

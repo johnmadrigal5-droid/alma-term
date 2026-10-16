@@ -5,6 +5,7 @@ import { ByteRing } from './flow/ring-buffer'
 import { realScheduler, type Scheduler } from './flow/scheduler'
 import type { PortLike } from './ports'
 import type { PtyLike } from './pty-types'
+import type { SessionLogWriter } from './session-log'
 
 const KILL_ESCALATION_MS = 3000
 
@@ -15,6 +16,8 @@ export interface TerminalSessionOptions {
   onDetached: () => void
   scheduler?: Scheduler
   warn?: (message: string) => void
+  /** Receives everything the terminal printed, whether or not a tab is attached. */
+  log?: SessionLogWriter
 }
 
 export class TerminalSession {
@@ -92,6 +95,7 @@ export class TerminalSession {
   }
 
   private emitData(bytes: Uint8Array): void {
+    this.safe('log', () => this.options.log?.write(bytes))
     this.ring.append(bytes)
     if (this.port) this.post(this.port, bytes)
   }
@@ -118,6 +122,7 @@ export class TerminalSession {
   private handleExit(exitCode: number, lost: boolean): void {
     this.scheduler.clearTimeout(this.killTimer)
     this.coalescer.dispose()
+    this.safe('log', () => this.options.log?.close())
     this.exitCode = exitCode
     // A dropped connection is not an exit: the tab keeps its content and offers to reconnect,
     // so the data port gets no exit message that would mark it as cleanly closed.

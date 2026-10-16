@@ -4,6 +4,7 @@ import {
   type HostToMain,
   type KnownHostEntry,
   type ProtocolError,
+  type SessionLog,
 } from '@alma/protocol'
 import { realScheduler, type Scheduler } from './flow/scheduler'
 import { ScpService } from './scp/scp-service'
@@ -20,6 +21,7 @@ import { PromptBroker, PromptCancelledError } from './ssh/prompt-broker'
 import { mapSshError } from './ssh/ssh-errors'
 import { realTunnelNet } from './tunnels/real-net'
 import { TunnelFailure, TunnelManager, type TunnelNet } from './tunnels/tunnel-manager'
+import type { SessionLogWriter } from './session-log'
 import { TerminalSession } from './terminal-session'
 import type { PortLike } from './ports'
 import type { PtyFactory, PtyLike } from './pty-types'
@@ -37,6 +39,8 @@ export interface ManagerDeps {
   newPromptId?: () => string
   localFs?: LocalFs
   tunnelNet?: TunnelNet
+  /** Opens the text log of a session; absent where logging is not wired (tests). */
+  openLog?: (log: SessionLog) => SessionLogWriter
 }
 
 interface Connecting {
@@ -278,7 +282,7 @@ export class SessionManager {
       const text = error instanceof Error ? error.message : 'No se pudo iniciar la shell'
       return this.fail(requestId, { code: 'SPAWN_FAILED', message: text })
     }
-    this.startSession(requestId, sessionId, pty, port, null)
+    this.startSession(requestId, sessionId, pty, port, null, null, message.log)
   }
 
   private startSession(
@@ -288,6 +292,7 @@ export class SessionManager {
     port: PortLike,
     sftp: RemoteFiles | null,
     connection: SshConnection | null = null,
+    log?: SessionLog,
   ): void {
     const entry: Entry = {
       graceTimer: null,
@@ -298,6 +303,7 @@ export class SessionManager {
         pty,
         scheduler: this.scheduler,
         warn: this.deps.warn,
+        log: log ? this.deps.openLog?.(log) : undefined,
         onStatus: (state, exitCode) => {
           if (state === 'closed' || state === 'lost') this.forget(sessionId)
           this.deps.send({ type: 'event.status', sessionId, state, exitCode })
@@ -464,6 +470,7 @@ export class SessionManager {
             (mode) => this.deps.send({ type: 'event.sftp-mode', sessionId, mode }),
           ),
           connection,
+          message.log,
         )
         // Only after authentication succeeded and the open was answered: main stores it encrypted.
         if (connection.remembered)

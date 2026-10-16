@@ -214,6 +214,10 @@ export function App() {
         return useUi.getState().setFolderDialog({ mode: 'create', parentId: null })
       case 'export':
         return void window.api.saved.exportJson()
+      case 'openLogDir':
+        return void window.api.settings.openLogDir()
+      case 'chooseLogDir':
+        return void window.api.settings.chooseLogDir()
     }
   }
 
