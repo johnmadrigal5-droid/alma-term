@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
@@ -30,6 +30,8 @@ function launchEnv(): Record<string, string> {
 
 test.beforeEach(async () => {
   home = mkdtempSync(join(tmpdir(), 'alma-e2e-log-'))
+  // Without a Documents folder Electron falls back to the home folder.
+  mkdirSync(join(home, 'Documents'))
   app = await electron.launch(launchOptions(launchEnv()))
   page = await app.firstWindow()
   await page.waitForLoadState('domcontentloaded')
