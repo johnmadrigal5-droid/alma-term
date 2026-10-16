@@ -15,7 +15,7 @@ Local and SSH terminals, a side SFTP panel on the same connection (with SCP fall
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-555)
 
-**[Download the latest release](https://github.com/johnmadrigal5-droid/alma-term/releases/latest)**
+**[Download the latest release](https://github.com/johnmadrigal5-droid/alma-term/releases/latest)** · [Support on Ko-fi](https://ko-fi.com/almadev)
 
 ![Four terminals in a 2×2 grid with the MultiExec composer open](docs/images/multiexec-2x2.png)
 
@@ -140,6 +140,10 @@ CI (`.github/workflows`) runs Prettier, ESLint, type checks, unit and native tes
 - TDD in the host and the protocol: more than 800 unit tests, integration tests against `linuxserver/openssh-server` (SFTP, SCP, tunnels, transfers) and E2E tests of the success criteria on the packaged app.
 - Accessibility checked with axe-core in both themes (zero serious or critical violations), focus trapped and restored in dialogs, targets of at least 24 px.
 - WCAG AA contrast verified by a test that recomputes each theme's token matrix.
+
+## Support
+
+Alma Term is free and open source. If it is useful to you, you can [buy me a coffee on Ko-fi](https://ko-fi.com/almadev).
 
 ## Contributing
 
